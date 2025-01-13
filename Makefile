@@ -40,26 +40,27 @@ all: $(TARGETS) $(KERN_OBJECTS)
 .PHONY: clean $(CLANG) $(LLC)
 
 clean:
-	rm -f *.ll
-	rm -f $(BPFLIB)
-	rm -f $(TARGETS)
-	rm -f $(KERN_OBJECTS)
-	rm -f $(USER_OBJECTS)
+  rm -f *.ll
+  rm -f $(BPFLIB)
+  rm -f $(TARGETS)
+  rm -f $(KERN_OBJECTS)
+  rm -f $(USER_OBJECTS)
 
 #  clang option -S generated output file with suffix .ll
 #   which is the non-binary LLVM assembly language format
 #   (normally LLVM bitcode format .bc is generated)
 #
 $(KERN_OBJECTS): %.o: %.c bpf_helpers.h
-	#it will generate .ll file which is actually a LLVM assembly code
-	$(CLANG) -S $(NOSTDINC_FLAGS) $(LINUXINCLUDE) $(EXTRA_CFLAGS) \
-	    -D__KERNEL__ -D__ASM_SYSREG_H -Wno-unused-value -Wno-pointer-sign \
-	    -Wno-compare-distinct-pointer-types \
-	    -Wno-gnu-variable-sized-type-not-at-end \
-	    -Wno-tautological-compare \
-	    -O2 -emit-llvm -c $<
-	#now translate LLVM assembly to native assembly
-	$(LLC) -march=bpf -filetype=obj -o $@ ${@:.o=.ll}
+  #it will generate .ll file which is actually a LLVM assembly code
+  $(CLANG) -S $(NOSTDINC_FLAGS) $(LINUXINCLUDE) $(EXTRA_CFLAGS) \
+      -D__KERNEL__ -D__ASM_SYSREG_H -DKBUILD_MODNAME='"cantrace"' \
+      -Wno-unused-value -Wno-pointer-sign \
+      -Wno-compare-distinct-pointer-types \
+      -Wno-gnu-variable-sized-type-not-at-end \
+      -Wno-tautological-compare \
+      -O2 -emit-llvm -c $<
+  #now translate LLVM assembly to native assembly
+  $(LLC) -march=bpf -filetype=obj -o $@ ${@:.o=.ll}
 
 $(TARGETS): %: %_user.c $(BPFLIB) Makefile
-	$(CC) $(CFLAGS) $(BPFLIB) $(LDFLAGS) -o $@ $<
+  $(CC) $(CFLAGS) $(BPFLIB) $(LDFLAGS) -o $@ $<

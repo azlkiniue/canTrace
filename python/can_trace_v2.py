@@ -1,9 +1,16 @@
 #!/usr/bin/python3  
 from bcc import BPF
+import sys, signal
 
 b = BPF(src_file="can_trace_v2.c")
 tp = b"net:netif_receive_skb"
 b.attach_tracepoint(tp=tp, fn_name="count_packets")
+
+def signal_handler(signal, frame):
+    print("")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
 
 def process_raw_data_field(raw_data_field):
   # Remove leading zeros but ensure at least one zero remains if needed

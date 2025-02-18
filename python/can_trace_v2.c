@@ -5,7 +5,6 @@
 #include <linux/can.h>
 #include <linux/can/dev.h>
 #include <linux/can/raw.h>
-#include "../bpf_helpers.h"
 
 #define _(P) ({ typeof(P) val = 0; bpf_probe_read(&val, sizeof(val), &P); val; })
 
